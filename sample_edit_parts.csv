@@ -1,0 +1,11 @@
+partNumber,partStatus,partDescription,fullDescription,partCategory,productCode,salesGroup,partType,phaseNumber,standardCost,unitOfMeasure,defaultCostField
+EX-PRTS2-0,Discontinued,Updated Short Description,,,,,,,,,
+EX-PRTS2-1,,,Updated Full Description,,,,,,,,
+EX-PRTS2-2,,,,4042 (ASSEMBLY),,,,,,,
+EX-PRTS2-3,,,,,31 (RAW MATERIAL),,,,,,
+EX-PRTS2-4,Hold,,,,,D/A (SPECIAL DEALER CREDIT),,,,,
+EX-PRTS2-5,,,,,,,B (Buy),,,,
+EX-PRTS2-6,,,,,,,,110 (Parts),,,
+EX-PRTS2-7,,,,,,,,,500,,
+EX-PRTS2-8,Zapped,,,,,,,,,EA (Each),
+EX-PRTS2-9,,,,,,,,,,,Base Cost

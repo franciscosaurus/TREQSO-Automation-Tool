@@ -1,0 +1,11 @@
+partNumber,partDescription,fullDescription,partCategory,productCode,salesGroup,partType,phaseNumber,orderType,standardCost,unitOfMeasure,defaultCostField
+EX-PRTS2-0,EX PART 0,,4041 (PART),40 (MANUFACTURED),,B (Buy),,,,EA (Each),Standard Cost
+EX-PRTS2-1,EX PART 1,,4042 (ASSEMBLY),31 (RAW MATERIAL),,M (Make),,,,EA (Each),Standard Cost
+EX-PRTS2-2,EX PART 2,,4041 (PART),50 (PARTS),,B (Buy),,,,EA (Each),Standard Cost
+EX-PRTS2-3,EX PART 3,,4042 (ASSEMBLY),40 (MANUFACTURED),,M (Make),,,,EA (Each),Base Cost
+EX-PRTS2-4,EX PART 4,,4041 (PART),31 (RAW MATERIAL),,B (Buy),,,,FT (Foot),Base Cost
+EX-PRTS2-5,EX PART 5,,4042 (ASSEMBLY),50 (PARTS),,M (Make),,,,FT (Foot),Base Cost
+EX-PRTS2-6,EX PART 6,,4041 (PART),40 (MANUFACTURED),,B (Buy),,,,FT (Foot),Average Cost
+EX-PRTS2-7,EX PART 7,,4042 (ASSEMBLY),31 (RAW MATERIAL),,M (Make),,,,FT (Foot),Average Cost
+EX-PRTS2-8,EX PART 8,,4041 (PART),50 (PARTS),,B (Buy),,,,FT (Foot),Average Cost
+EX-PRTS2-9,EX PART 9,,4042 (ASSEMBLY),40 (MANUFACTURED),,M (Make),,,,FT (Foot),Last Purchase Cost

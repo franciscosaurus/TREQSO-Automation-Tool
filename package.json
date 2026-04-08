@@ -1,0 +1,22 @@
+{
+  "name": "treqso-automation",
+  "version": "1.0.2",
+  "description": "TREQSO automation using Playwright and TypeScript",
+  "main": "dist/cli.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "cli": "node dist/cli.js",
+    "test-login": "npm run build && node dist/cli.js test_input.json"
+  },
+  "keywords": ["treqso", "automation", "playwright", "erp"],
+  "author": "Francisco Marquez",
+  "license": "MIT",
+  "dependencies": {
+    "@playwright/test": "^1.41.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.33",
+    "typescript": "^5.3.3"
+  }
+}
