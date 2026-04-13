@@ -185,7 +185,7 @@ class TREQSOGui:
         root.columnconfigure(0, weight=1)
         root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(0, weight=1)
-        main_frame.rowconfigure(2, weight=1)
+        main_frame.rowconfigure(2, weight=6)
         main_frame.rowconfigure(3, weight=1)
 
         # ── Title + separator ─────────────────────────────────────────────────
@@ -296,9 +296,59 @@ class TREQSOGui:
 
     # ── Internal helpers ──────────────────────────────────────────────────────
 
-    def _make_tab_frame(self) -> ttk.Frame:
-        """Return a padded SURFACE-coloured frame for use as a notebook tab."""
-        return ttk.Frame(self.notebook, padding="14")
+    def _make_scrollable_tab(self, parent_notebook) -> tuple[ttk.Frame, ttk.Frame]:
+        container = ttk.Frame(parent_notebook, style='TFrame')
+        canvas = tk.Canvas(container, bg=SURFACE, highlightthickness=0)
+        scrollbar = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
+
+        content_frame = ttk.Frame(canvas, style='TFrame')
+        content_frame.columnconfigure(0, weight=1)
+
+        # Use a BooleanVar to track if scrolling is needed
+        scroll_needed = tk.BooleanVar(value=False)
+
+        def _toggle_scrollbar():
+            if canvas.bbox("all"):
+                content_height = canvas.bbox("all")[3]
+                canvas_height = canvas.winfo_height()
+                need = content_height > canvas_height
+            else:
+                need = False
+
+            scroll_needed.set(need)
+            if need:
+                scrollbar.pack(side="right", fill="y")
+            else:
+                scrollbar.pack_forget()
+                canvas.yview_moveto(0)
+
+        def _update_scroll_region():
+            canvas.configure(scrollregion=canvas.bbox("all"))
+            _toggle_scrollbar()
+
+        content_frame.bind("<Configure>", lambda e: _update_scroll_region())
+
+        canvas_window = canvas.create_window((16,0), window=content_frame, anchor="nw")
+
+        def _configure_canvas(event):
+            padding_total = 32
+            canvas.itemconfig(canvas_window, width=event.width - padding_total)
+            _toggle_scrollbar()
+
+        canvas.bind("<Configure>", _configure_canvas)
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=True)
+
+        # Mouse wheel: scroll only if scroll_needed is True
+        def _on_mousewheel(event):
+            if scroll_needed.get():
+                canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+        canvas.bind("<Enter>", lambda e: canvas.bind_all("<MouseWheel>", _on_mousewheel))
+        canvas.bind("<Leave>", lambda e: canvas.unbind_all("<MouseWheel>"))
+
+        return container, content_frame
 
     def _build_csv_table(self, parent, csv_filename: str) -> None:
         """Read a CSV and render it as a dark-mode table inside a LabelFrame."""
@@ -348,16 +398,18 @@ class TREQSOGui:
     # ── Tab builders ──────────────────────────────────────────────────────────
 
     def create_print_tab(self):
-        tab = self._make_tab_frame()
-        self.notebook.add(tab, text="Print Manufacturing Orders")
+        # tab = self._make_tab_frame()
+        tab_container, tab_content = self._make_scrollable_tab(self.notebook)
+        self.notebook.add(tab_container, text="Print Manufacturing Orders")
 
-        ttk.Label(tab,
-            text="Print all Manufacturing Orders belonging to a parent MO Reference ID."
+        ttk.Label(tab_content,
+            text="Print all Manufacturing Orders belonging to a parent MO Reference ID.",
+            style='Section.TLabel'
         ).grid(row=0, column=0, columnspan=3, pady=(0, 12), sticky=tk.W)
 
-        ttk.Label(tab, text="Parent MO Reference ID:").grid(row=1, column=0, sticky=tk.W, pady=5)
+        ttk.Label(tab_content, text="Parent MO Reference ID:").grid(row=1, column=0, sticky=tk.E, pady=5)
         self.MO_ref_id = tk.StringVar()
-        ttk.Entry(tab, textvariable=self.MO_ref_id, width=40).grid(
+        ttk.Entry(tab_content, textvariable=self.MO_ref_id).grid(
             row=1, column=1, sticky='ew', pady=5, padx=6)
 
         try:
@@ -371,9 +423,9 @@ class TREQSOGui:
 
         self.printer_var = tk.StringVar(value=default_printer or "")
         printer_dropdown = ttk.Combobox(
-            tab, textvariable=self.printer_var,
+            tab_content, textvariable=self.printer_var,
             values=printers, state='readonly', width=37)
-        ttk.Label(tab, text="Select Printer:").grid(row=2, column=0, sticky=tk.W, pady=5)
+        ttk.Label(tab_content, text="Select Printer:").grid(row=2, column=0, sticky=tk.E, pady=5)
         printer_dropdown.grid(row=2, column=1, sticky='ew', pady=5, padx=6)
 
         if default_printer and default_printer in printers:
@@ -381,13 +433,13 @@ class TREQSOGui:
         elif printers and printers[0] != "No printers found":
             printer_dropdown.set(printers[0])
 
-        ttk.Button(tab, text="⟳", width=3,
+        ttk.Button(tab_content, text="⟳", width=3,
             command=lambda: self.refresh_printers(printer_dropdown)
         ).grid(row=2, column=2, pady=5, padx=(0, 6))
 
         # Printer setup note
-        note = ttk.LabelFrame(tab, text="Printer Setup Required", padding="10")
-        note.grid(row=3, column=0, columnspan=3, sticky='ew', pady=(10, 6))
+        note = ttk.LabelFrame(tab_content, text="Printer Setup Required", padding="10")
+        note.grid(row=3, column=0, columnspan=3, sticky='nsew', pady=(10, 6))
         ttk.Label(note,
             text="'Let Windows manage my default printer' must be set to OFF in\n"
                  "Printers & Scanners settings for printer selection to work correctly.",
@@ -398,33 +450,36 @@ class TREQSOGui:
         ).grid(row=0, column=1, sticky=tk.E, padx=(20, 0))
         note.columnconfigure(0, weight=1)
 
-        ttk.Button(tab, text="Print MOs",
+        ttk.Button(tab_content, text="Print MOs",
             command=self.print_mos, style='Accent.TButton'
         ).grid(row=5, column=0, columnspan=3, pady=20)
 
-        tab.columnconfigure(1, weight=1)
+        tab_content.columnconfigure(0, weight=1)
+        tab_content.columnconfigure(1, weight=20)
+        tab_content.columnconfigure(2, weight=1)
 
     def create_parts_tab(self):
-        tab = self._make_tab_frame()
-        self.notebook.add(tab, text="Create Parts")
+        tab_container, tab_content = self._make_scrollable_tab(self.notebook)
+        self.notebook.add(tab_container, text="Create Parts")
 
-        ttk.Label(tab,
-            text="Create parts in TREQSO from a CSV file — one part per row."
+        ttk.Label(tab_content,
+            text="Create parts in TREQSO from a CSV file — one part per row.",
+            style='Section.TLabel'
         ).grid(row=0, column=0, columnspan=3, pady=(0, 12), sticky=tk.W)
 
-        ttk.Label(tab, text="CSV File:").grid(row=1, column=0, sticky=tk.W, pady=5)
+        ttk.Label(tab_content, text="CSV File:").grid(row=1, column=0, sticky=tk.E, pady=5)
         self.parts_file_var = tk.StringVar()
-        ttk.Entry(tab, textvariable=self.parts_file_var, width=50).grid(
+        ttk.Entry(tab_content, textvariable=self.parts_file_var, width=50).grid(
             row=1, column=1, sticky='ew', pady=5, padx=6)
-        ttk.Button(tab, text="Browse…",
+        ttk.Button(tab_content, text="Browse…",
             command=lambda: self.browse_file(self.parts_file_var)
         ).grid(row=1, column=2, pady=5)
 
-        format_frame = ttk.LabelFrame(tab, text="Expected CSV Format", padding="10")
+        format_frame = ttk.LabelFrame(tab_content, text="Expected CSV Format", padding="10")
         format_frame.grid(row=2, column=0, columnspan=3, sticky='ew', pady=(6, 4))
         self._build_csv_table(format_frame, "sample_parts.csv")
 
-        self._build_instructions(tab, row=3, text=(
+        self._build_instructions(tab_content, row=3, text=(
             "1.  Click \"Open Parts Template\" to open Parts_Template.xlsx in Excel.\n"
             "2.  Fill in your part data — one part per row. Do not change the column headers.\n"
             "3.  In Excel: File → Save As → CSV (Comma delimited) (*.csv) → Save.\n"
@@ -432,7 +487,7 @@ class TREQSOGui:
             "5.  Click Create Parts."
         ))
 
-        btn_frame = ttk.Frame(tab)
+        btn_frame = ttk.Frame(tab_content)
         btn_frame.grid(row=4, column=0, columnspan=3, pady=(8, 4))
         ttk.Button(btn_frame, text="Create Parts",
             command=self.create_parts, style='Accent.TButton'
@@ -444,33 +499,36 @@ class TREQSOGui:
             command=lambda: self.open_sample(resource_path('sample_parts.csv'))
         ).pack(side=tk.LEFT, padx=5)
 
-        tab.columnconfigure(1, weight=1)
+        tab_content.columnconfigure(0, weight=1)
+        tab_content.columnconfigure(1, weight=20)
+        tab_content.columnconfigure(2, weight=1)
 
     def create_edit_parts_tab(self):
-        tab = self._make_tab_frame()
-        self.notebook.add(tab, text="Edit Parts")
+        tab_container, tab_content = self._make_scrollable_tab(self.notebook)
+        self.notebook.add(tab_container, text="Edit Parts")
 
-        ttk.Label(tab,
+        ttk.Label(tab_content,
             text="Update attributes of existing parts in TREQSO from a CSV file. "
                  "Only the columns you include in the CSV will be changed — "
-                 "all other fields are left exactly as they are."
+                 "all other fields are left exactly as they are.",
+            style='Section.TLabel'
         ).grid(row=0, column=0, columnspan=3, pady=(0, 12), sticky=tk.W)
 
-        ttk.Label(tab, text="CSV File:").grid(row=1, column=0, sticky=tk.W, pady=5)
+        ttk.Label(tab_content, text="CSV File:").grid(row=1, column=0, sticky=tk.W, pady=5)
         self.edit_parts_file_var = tk.StringVar()
-        ttk.Entry(tab, textvariable=self.edit_parts_file_var, width=50).grid(
+        ttk.Entry(tab_content, textvariable=self.edit_parts_file_var, width=50).grid(
             row=1, column=1, sticky='ew', pady=5, padx=6)
-        ttk.Button(tab, text="Browse…",
+        ttk.Button(tab_content, text="Browse…",
             command=lambda: self.browse_file(self.edit_parts_file_var)
         ).grid(row=1, column=2, pady=5)
 
         # Format preview — shows the sample CSV (minimal columns)
-        format_frame = ttk.LabelFrame(tab, text="Example CSV Format", padding="10")
+        format_frame = ttk.LabelFrame(tab_content, text="Example CSV Format", padding="10")
         format_frame.grid(row=2, column=0, columnspan=3, sticky='ew', pady=(6, 4))
         self._build_csv_table(format_frame, "sample_edit_parts.csv")
 
         # Available fields reference card
-        fields_frame = ttk.LabelFrame(tab, text="All Editable Fields                                                                                                          " \
+        fields_frame = ttk.LabelFrame(tab_content, text="All Editable Fields                                                                                                          " \
         "                                    Instructions", padding="12")
         fields_frame.grid(row=3, column=0, columnspan=3, pady=(0, 4))
 
@@ -523,7 +581,7 @@ class TREQSOGui:
             justify=tk.LEFT, padx=4, pady=4
         ).grid(row=0, column=2, sticky=tk.E)
 
-        btn_frame = ttk.Frame(tab)
+        btn_frame = ttk.Frame(tab_content)
         btn_frame.grid(row=5, column=0, columnspan=3, pady=(8, 4))
         ttk.Button(btn_frame, text="Edit Parts",
             command=self.edit_parts, style='Accent.TButton'
@@ -535,30 +593,33 @@ class TREQSOGui:
             command=lambda: self.open_sample(resource_path('sample_edit_parts.csv'))
         ).pack(side=tk.LEFT, padx=5)
 
-        tab.columnconfigure(1, weight=1)
+        tab_content.columnconfigure(0, weight=1)
+        tab_content.columnconfigure(1, weight=20)
+        tab_content.columnconfigure(2, weight=1)
 
     def create_bom_tab(self):
-        tab = self._make_tab_frame()
-        self.notebook.add(tab, text="Create BOMs")
+        tab_container, tab_content = self._make_scrollable_tab(self.notebook)
+        self.notebook.add(tab_container, text="Create BOMs")
 
-        ttk.Label(tab,
+        ttk.Label(tab_content,
             text="Create Bills of Materials in TREQSO from a CSV file. "
-                 "A single file can contain data for multiple assemblies."
+                 "A single file can contain data for multiple assemblies.",
+            style='Section.TLabel'
         ).grid(row=0, column=0, columnspan=3, pady=(0, 12), sticky=tk.W)
 
-        ttk.Label(tab, text="CSV File:").grid(row=1, column=0, sticky=tk.W, pady=5)
+        ttk.Label(tab_content, text="CSV File:").grid(row=1, column=0, sticky=tk.W, pady=5)
         self.bom_file_var = tk.StringVar()
-        ttk.Entry(tab, textvariable=self.bom_file_var, width=50).grid(
+        ttk.Entry(tab_content, textvariable=self.bom_file_var, width=50).grid(
             row=1, column=1, sticky='ew', pady=5, padx=6)
-        ttk.Button(tab, text="Browse…",
+        ttk.Button(tab_content, text="Browse…",
             command=lambda: self.browse_file(self.bom_file_var)
         ).grid(row=1, column=2, pady=5)
 
-        format_frame = ttk.LabelFrame(tab, text="Expected CSV Format", padding="10")
+        format_frame = ttk.LabelFrame(tab_content, text="Expected CSV Format", padding="10")
         format_frame.grid(row=2, column=0, columnspan=3, sticky='ew', pady=(6, 4))
         self._build_csv_table(format_frame, "sample_bom.csv")
 
-        self._build_instructions(tab, row=3, text=(
+        self._build_instructions(tab_content, row=3, text=(
             "1.  Click \"Open BOM Template\" to open BOMs_Template.xlsx in Excel.\n"
             "2.  Fill in your BOM data — one component line per row. "
                  "All lines for the same assembly must be grouped together. "
@@ -568,7 +629,7 @@ class TREQSOGui:
             "5.  Click Create BOMs."
         ))
 
-        btn_frame = ttk.Frame(tab)
+        btn_frame = ttk.Frame(tab_content)
         btn_frame.grid(row=4, column=0, columnspan=3, pady=(8, 4))
         ttk.Button(btn_frame, text="Create BOMs",
             command=self.create_bom, style='Accent.TButton'
@@ -580,34 +641,37 @@ class TREQSOGui:
             command=lambda: self.open_sample(resource_path('sample_bom.csv'))
         ).pack(side=tk.LEFT, padx=5)
 
-        tab.columnconfigure(1, weight=1)
+        tab_content.columnconfigure(0, weight=1)
+        tab_content.columnconfigure(1, weight=20)
+        tab_content.columnconfigure(2, weight=1)
 
     def create_replace_tab(self):
-        tab = self._make_tab_frame()
-        self.notebook.add(tab, text="Mass Replace Part")
+        tab_container, tab_content = self._make_scrollable_tab(self.notebook)
+        self.notebook.add(tab_container, text="Mass Replace Part")
 
-        ttk.Label(tab,
+        ttk.Label(tab_content,
             text="Replace a part across every assembly BOM that contains it. "
-                 "The tool finds all affected assemblies automatically."
+                 "The tool finds all affected assemblies automatically.",
+            style='Section.TLabel'
         ).grid(row=0, column=0, columnspan=2, pady=(0, 12), sticky=tk.W)
 
-        ttk.Label(tab, text="Old Part Number:").grid(row=1, column=0, sticky=tk.W, pady=5)
+        ttk.Label(tab_content, text="Old Part Number:").grid(row=1, column=0, sticky=tk.W, pady=5)
         self.old_pn_var = tk.StringVar()
-        ttk.Entry(tab, textvariable=self.old_pn_var, width=40).grid(
+        ttk.Entry(tab_content, textvariable=self.old_pn_var, width=40).grid(
             row=1, column=1, sticky='ew', pady=5, padx=6)
 
-        ttk.Label(tab, text="New Part Number:").grid(row=2, column=0, sticky=tk.W, pady=5)
+        ttk.Label(tab_content, text="New Part Number:").grid(row=2, column=0, sticky=tk.W, pady=5)
         self.new_pn_var = tk.StringVar()
-        ttk.Entry(tab, textvariable=self.new_pn_var, width=40).grid(
+        ttk.Entry(tab_content, textvariable=self.new_pn_var, width=40).grid(
             row=2, column=1, sticky='ew', pady=5, padx=6)
 
-        ttk.Label(tab, text="New Quantity (optional):").grid(row=3, column=0, sticky=tk.W, pady=5)
+        ttk.Label(tab_content, text="New Quantity (optional):").grid(row=3, column=0, sticky=tk.W, pady=5)
         self.quantity_var = tk.StringVar()
-        ttk.Entry(tab, textvariable=self.quantity_var, width=40).grid(
+        ttk.Entry(tab_content, textvariable=self.quantity_var, width=40).grid(
             row=3, column=1, sticky='ew', pady=5, padx=6)
 
         # Example card
-        ex_frame = ttk.LabelFrame(tab, text="Example", padding="12")
+        ex_frame = ttk.LabelFrame(tab_content, text="Example", padding="12")
         ex_frame.grid(row=4, column=0, columnspan=2, sticky='ew', pady=(12, 4))
         tk.Label(ex_frame,
             text="Old Part Number:  RES-001-100K\n"
@@ -618,44 +682,46 @@ class TREQSOGui:
             justify=tk.LEFT, padx=4, pady=4
         ).grid(row=0, column=0, sticky=tk.W)
 
-        ttk.Button(tab, text="Replace Part",
+        ttk.Button(tab_content, text="Replace Part",
             command=self.replace_part, style='Accent.TButton'
         ).grid(row=5, column=0, columnspan=2, pady=20)
 
-        tab.columnconfigure(1, weight=1)
+        tab_content.columnconfigure(0, weight=1)
+        tab_content.columnconfigure(1, weight=20)
+        tab_content.columnconfigure(2, weight=1)
 
     def create_settings_tab(self):
-        tab = self._make_tab_frame()
-        self.notebook.add(tab, text="Settings")
+        tab_container, tab_content = self._make_scrollable_tab(self.notebook)
+        self.notebook.add(tab_container, text="Settings")
 
-        ttk.Label(tab, text="TREQSO Connection Settings",
+        ttk.Label(tab_content, text="TREQSO Connection Settings",
             style='Section.TLabel'
         ).grid(row=0, column=0, columnspan=2, pady=(0, 14), sticky=tk.W)
 
-        ttk.Label(tab, text="TREQSO URL:").grid(row=1, column=0, sticky=tk.W, pady=6)
+        ttk.Label(tab_content, text="TREQSO URL:").grid(row=1, column=0, sticky=tk.W, pady=6)
         self.url_var = tk.StringVar(value=os.getenv('TREQSO_URL', ''))
-        ttk.Entry(tab, textvariable=self.url_var, width=55).grid(
+        ttk.Entry(tab_content, textvariable=self.url_var, width=55).grid(
             row=1, column=1, sticky='ew', pady=6, padx=6)
 
-        ttk.Label(tab, text="Company:").grid(row=2, column=0, sticky=tk.W, pady=6)
+        ttk.Label(tab_content, text="Company:").grid(row=2, column=0, sticky=tk.W, pady=6)
         self.company = tk.StringVar(value=os.getenv('COMPANY', 'CargoTest'))
-        ttk.Entry(tab, textvariable=self.company, width=55).grid(
+        ttk.Entry(tab_content, textvariable=self.company, width=55).grid(
             row=2, column=1, sticky='ew', pady=6, padx=6)
 
-        ttk.Label(tab, text="Headless Mode:").grid(row=3, column=0, sticky=tk.W, pady=6)
+        ttk.Label(tab_content, text="Headless Mode:").grid(row=3, column=0, sticky=tk.W, pady=6)
         self.headless_var = tk.BooleanVar(
             value=os.getenv('TREQSO_HEADLESS', 'false').lower() == 'true')
-        ttk.Checkbutton(tab,
+        ttk.Checkbutton(tab_content,
             text="Run browser in background (no window)",
             variable=self.headless_var
         ).grid(row=3, column=1, sticky=tk.W, pady=6, padx=6)
 
-        ttk.Label(tab, text="Slow Motion (ms):").grid(row=4, column=0, sticky=tk.W, pady=6)
+        ttk.Label(tab_content, text="Slow Motion (ms):").grid(row=4, column=0, sticky=tk.W, pady=6)
         self.slowmo_var = tk.StringVar(value=os.getenv('TREQSO_SLOW_MO', '0'))
-        ttk.Entry(tab, textvariable=self.slowmo_var, width=20).grid(
+        ttk.Entry(tab_content, textvariable=self.slowmo_var, width=20).grid(
             row=4, column=1, sticky=tk.W, pady=6, padx=6)
 
-        btn_frame = ttk.Frame(tab)
+        btn_frame = ttk.Frame(tab_content)
         btn_frame.grid(row=5, column=0, columnspan=2, pady=20)
         ttk.Button(btn_frame, text="Save Settings",
             command=self.save_settings
@@ -667,7 +733,7 @@ class TREQSOGui:
             command=self.open_user_guide
         ).pack(side=tk.LEFT, padx=6)
 
-        note_frame = ttk.LabelFrame(tab, text="Note", padding="12")
+        note_frame = ttk.LabelFrame(tab_content, text="Note", padding="12")
         note_frame.grid(row=6, column=0, columnspan=2, sticky='ew', pady=(4, 0))
         ttk.Label(note_frame,
             text="Settings are loaded from the .env file on startup. "
@@ -675,7 +741,9 @@ class TREQSOGui:
             style='Card.TLabel', wraplength=700
         ).grid(row=0, column=0, sticky=tk.W)
 
-        tab.columnconfigure(1, weight=1)
+        tab_content.columnconfigure(0, weight=1)
+        tab_content.columnconfigure(1, weight=20)
+        tab_content.columnconfigure(2, weight=1)
 
     # ── Utility methods ───────────────────────────────────────────────────────
 
