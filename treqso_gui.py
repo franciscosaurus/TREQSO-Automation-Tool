@@ -514,7 +514,7 @@ class TREQSOGui:
             style='Section.TLabel'
         ).grid(row=0, column=0, columnspan=3, pady=(0, 12), sticky=tk.W)
 
-        ttk.Label(tab_content, text="CSV File:").grid(row=1, column=0, sticky=tk.W, pady=5)
+        ttk.Label(tab_content, text="CSV File:").grid(row=1, column=0, sticky=tk.E, pady=5)
         self.edit_parts_file_var = tk.StringVar()
         ttk.Entry(tab_content, textvariable=self.edit_parts_file_var, width=50).grid(
             row=1, column=1, sticky='ew', pady=5, padx=6)
@@ -607,7 +607,7 @@ class TREQSOGui:
             style='Section.TLabel'
         ).grid(row=0, column=0, columnspan=3, pady=(0, 12), sticky=tk.W)
 
-        ttk.Label(tab_content, text="CSV File:").grid(row=1, column=0, sticky=tk.W, pady=5)
+        ttk.Label(tab_content, text="CSV File:").grid(row=1, column=0, sticky=tk.E, pady=5)
         self.bom_file_var = tk.StringVar()
         ttk.Entry(tab_content, textvariable=self.bom_file_var, width=50).grid(
             row=1, column=1, sticky='ew', pady=5, padx=6)
@@ -655,17 +655,17 @@ class TREQSOGui:
             style='Section.TLabel'
         ).grid(row=0, column=0, columnspan=2, pady=(0, 12), sticky=tk.W)
 
-        ttk.Label(tab_content, text="Old Part Number:").grid(row=1, column=0, sticky=tk.W, pady=5)
+        ttk.Label(tab_content, text="Old Part Number:").grid(row=1, column=0, sticky=tk.E, pady=5)
         self.old_pn_var = tk.StringVar()
         ttk.Entry(tab_content, textvariable=self.old_pn_var, width=40).grid(
             row=1, column=1, sticky='ew', pady=5, padx=6)
 
-        ttk.Label(tab_content, text="New Part Number:").grid(row=2, column=0, sticky=tk.W, pady=5)
+        ttk.Label(tab_content, text="New Part Number:").grid(row=2, column=0, sticky=tk.E, pady=5)
         self.new_pn_var = tk.StringVar()
         ttk.Entry(tab_content, textvariable=self.new_pn_var, width=40).grid(
             row=2, column=1, sticky='ew', pady=5, padx=6)
 
-        ttk.Label(tab_content, text="New Quantity (optional):").grid(row=3, column=0, sticky=tk.W, pady=5)
+        ttk.Label(tab_content, text="New Quantity (optional):").grid(row=3, column=0, sticky=tk.E, pady=5)
         self.quantity_var = tk.StringVar()
         ttk.Entry(tab_content, textvariable=self.quantity_var, width=40).grid(
             row=3, column=1, sticky='ew', pady=5, padx=6)
@@ -698,17 +698,17 @@ class TREQSOGui:
             style='Section.TLabel'
         ).grid(row=0, column=0, columnspan=2, pady=(0, 14), sticky=tk.W)
 
-        ttk.Label(tab_content, text="TREQSO URL:").grid(row=1, column=0, sticky=tk.W, pady=6)
+        ttk.Label(tab_content, text="TREQSO URL:").grid(row=1, column=0, sticky=tk.E, pady=6)
         self.url_var = tk.StringVar(value=os.getenv('TREQSO_URL', ''))
         ttk.Entry(tab_content, textvariable=self.url_var, width=55).grid(
             row=1, column=1, sticky='ew', pady=6, padx=6)
 
-        ttk.Label(tab_content, text="Company:").grid(row=2, column=0, sticky=tk.W, pady=6)
+        ttk.Label(tab_content, text="Company:").grid(row=2, column=0, sticky=tk.E, pady=6)
         self.company = tk.StringVar(value=os.getenv('COMPANY', 'CargoTest'))
         ttk.Entry(tab_content, textvariable=self.company, width=55).grid(
             row=2, column=1, sticky='ew', pady=6, padx=6)
 
-        ttk.Label(tab_content, text="Headless Mode:").grid(row=3, column=0, sticky=tk.W, pady=6)
+        ttk.Label(tab_content, text="Headless Mode:").grid(row=3, column=0, sticky=tk.E, pady=6)
         self.headless_var = tk.BooleanVar(
             value=os.getenv('TREQSO_HEADLESS', 'false').lower() == 'true')
         ttk.Checkbutton(tab_content,
@@ -716,7 +716,7 @@ class TREQSOGui:
             variable=self.headless_var
         ).grid(row=3, column=1, sticky=tk.W, pady=6, padx=6)
 
-        ttk.Label(tab_content, text="Slow Motion (ms):").grid(row=4, column=0, sticky=tk.W, pady=6)
+        ttk.Label(tab_content, text="Slow Motion (ms):").grid(row=4, column=0, sticky=tk.E, pady=6)
         self.slowmo_var = tk.StringVar(value=os.getenv('TREQSO_SLOW_MO', '0'))
         ttk.Entry(tab_content, textvariable=self.slowmo_var, width=20).grid(
             row=4, column=1, sticky=tk.W, pady=6, padx=6)
