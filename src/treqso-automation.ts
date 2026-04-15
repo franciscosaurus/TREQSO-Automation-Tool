@@ -120,7 +120,7 @@ export class TREQSOAutomation {
   
   async WaitToLoad(): Promise<void> {
     if (!this.page) throw new Error('Browser not started');
-    await this.page.waitForTimeout(1000);
+    await this.page.waitForTimeout(1250);
     await this.page.getByAltText('Loading...').waitFor({state: 'hidden'})
   }
 
@@ -374,17 +374,17 @@ export class TREQSOAutomation {
       // Inputing ASM#
       await this.page.locator('#ctl00_ContentPlaceHolder1_txtParentPart_Input').click();
       await this.page.locator('#ctl00_ContentPlaceHolder1_txtParentPart_Input').pressSequentially(partNumber);
-      await this.page.waitForTimeout(750);
+      await this.page.waitForTimeout(1250);
 
       // Inputing First Component PRT#
       await this.page.locator('#ctl00_ContentPlaceHolder1_txtComponentPart_Input').pressSequentially(firstPart.partNumber);
-      await this.page.waitForTimeout(750);
+      await this.page.waitForTimeout(1250);
 
       // Inputting Quantity
       await this.page.locator('#ctl00_ContentPlaceHolder1_txtQuantity').fill(firstPart.quantity.toString());
 
       // Unchecking is Assembly?
-      await this.page.waitForTimeout(750);
+      await this.page.waitForTimeout(1250);
       await this.page.getByRole('checkbox').first().click({ force: true });
 
       // Creating the assembly with the first part
@@ -453,13 +453,13 @@ export class TREQSOAutomation {
 
             // Inputting Component PRT#
             await this.page.locator('#ctl00_ContentPlaceHolder1_txtComponentPart_Input').pressSequentially(line.partNumber);
-            await this.page.waitForTimeout(1000);
+            await this.page.waitForTimeout(1250);
 
             // Inputting Quantity
             await this.page.locator('#ctl00_ContentPlaceHolder1_txtQuantity').fill(line.quantity.toString());
             
             // Unchecking is Assembly?
-            await this.page.waitForTimeout(750);
+            await this.page.waitForTimeout(1250);
             await this.page.getByRole('checkbox').first().click({ force: true });
 
             // Saving Detail
@@ -626,7 +626,7 @@ export class TREQSOAutomation {
 
         // Inputting Component PRT#
         await this.page.locator('#ctl00_ContentPlaceHolder1_txtComponentPart_Input').pressSequentially(newPartNumber);
-        await this.page.waitForTimeout(1000);
+        await this.page.waitForTimeout(1250);
 
         // Inputting Quantity
         if(updateQuantity) {
@@ -636,7 +636,7 @@ export class TREQSOAutomation {
         }
         
         // Unchecking is Assembly?
-        await this.page.waitForTimeout(750);
+        await this.page.waitForTimeout(1250);
         await this.page.getByRole('checkbox').first().click({ force: true });
 
         // Saving Detail
@@ -776,7 +776,7 @@ export class TREQSOAutomation {
     for (const update of updates) {
       const success = await this.editPart(update);
       results[update.partNumber] = success;
-      await this.page?.waitForTimeout(1000);
+      await this.page?.waitForTimeout(1250);
     }
 
     return results;
@@ -791,7 +791,7 @@ export class TREQSOAutomation {
     for (const part of parts) {
       const success = await this.createPart(part);
       results[part.partNumber] = success;
-      await this.page?.waitForTimeout(1000);
+      await this.page?.waitForTimeout(1250);
     }
 
     return results;
