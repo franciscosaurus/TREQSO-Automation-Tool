@@ -705,8 +705,8 @@ class TREQSOGui:
 
         ttk.Label(tab_content, text="Company:").grid(row=2, column=0, sticky=tk.E, pady=6)
         self.company = tk.StringVar(value=os.getenv('COMPANY', 'CargoTest'))
-        ttk.Entry(tab_content, textvariable=self.company, width=55).grid(
-            row=2, column=1, sticky='ew', pady=6, padx=6)
+        ttk.Combobox(tab_content, textvariable=self.company, values=['CargoTest', 'Cargo', 
+            'Transit', 'Truck'], state='readonly' , width=55).grid(row=2, column=1, sticky='ew', pady=6, padx=6)
 
         ttk.Label(tab_content, text="Headless Mode:").grid(row=3, column=0, sticky=tk.E, pady=6)
         self.headless_var = tk.BooleanVar(

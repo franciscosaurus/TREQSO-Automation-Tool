@@ -113,7 +113,7 @@ export class TREQSOAutomation {
     if (!texts[0].startsWith('Company: ' + this.config.company + '  User:')) {
       await this.page.getByRole('button', { name: 'Switch Company' }).click();
       await this.page.locator('#ddlDatabases_Input').click();
-      await this.page.getByText(this.config.company).click();
+      await this.page.getByText(this.config.company, {exact: true}).click();
       await this.page.getByRole('button', { name: 'Login' }).click();
     }
   }
